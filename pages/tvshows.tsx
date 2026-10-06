@@ -1,25 +1,25 @@
-import axios from 'axios';
+import type { NextPage, GetServerSideProps } from 'next';
 import MainVideo from '../components/MainVideo';
 import { MovieCollection } from '../components';
-import { Media, Results } from '../types';
-import type { NextPage } from 'next';
-import { pageTvRequests } from './api/data/requests';
+import { Media } from '../types';
+import { getDiscover, getTrending, getTopRated } from '../lib/tmdb';
 
-export async function getServerSideProps() {
-  const popular: Results = await axios
-    .get(pageTvRequests.discover)
-    .then((res) => res.data.results);
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  if (context.res) {
+    context.res.setHeader(
+      'Cache-Control',
+      'public, s-maxage=3600, stale-while-revalidate=86400'
+    );
+  }
 
-  const trending: Results = await axios
-    .get(pageTvRequests.trending)
-    .then((res) => res.data.results);
-
-  const toprated: Results = await axios
-    .get(pageTvRequests.toprated)
-    .then((res) => res.data.results);
+  const [popular, trending, toprated] = await Promise.all([
+    getDiscover('tv'),
+    getTrending('tv'),
+    getTopRated('tv'),
+  ]);
 
   return { props: { popular, trending, toprated } };
-}
+};
 
 interface Props {
   popular: Media[];
@@ -27,20 +27,20 @@ interface Props {
   toprated: Media[];
 }
 
-const TVShows: NextPage<Props> = (props) => {
-  const randomVideo = Math.floor(Math.random() * props?.toprated.length);
-  const video = props?.toprated[randomVideo].id;
+const TVShows: NextPage<Props> = ({ popular = [], trending = [], toprated = [] }) => {
+  const randomVideo = toprated.length > 0 ? Math.floor(Math.random() * toprated.length) : 0;
+  const video = toprated[randomVideo]?.id;
 
   return (
-    <div>
-      <MainVideo media={video} />
+    <main className="pb-24 sm:pb-12 max-w-7xl mx-auto flex flex-col gap-6 pt-4">
+      <MainVideo media={video} type="tv" />
 
-      <MovieCollection movies={props?.trending} category="Trending" />
+      <MovieCollection movies={trending} category="Trending" />
 
-      <MovieCollection movies={props?.popular} category="Popular" />
+      <MovieCollection movies={popular} category="Popular" />
 
-      <MovieCollection movies={props?.toprated} category="Toprated" />
-    </div>
+      <MovieCollection movies={toprated} category="Toprated" />
+    </main>
   );
 };
 

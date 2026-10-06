@@ -4,156 +4,214 @@ import MovieCollection from './MovieCollection';
 import PersonCollection from './PersonCollection';
 import FavoriteButton from './FavoriteButton';
 import { MediaDetails } from '../types';
+import { getTmdbImageUrl } from '../lib/tmdb';
 
 export default function MediaDetailed({ media }: { media: MediaDetails }) {
-  const randomBg = Math.floor(Math.random() * media.images.backdrops.length);
-  const background = media.images.backdrops[randomBg].file_path;
+  const backdrops = media?.images?.backdrops || [];
+  const randomBg = backdrops.length > 0 ? Math.floor(Math.random() * backdrops.length) : 0;
+  const backgroundPath = backdrops[randomBg]?.file_path || media?.backdrop_path || media?.poster_path || '';
+  const backgroundUrl = getTmdbImageUrl(backgroundPath, 'w1280');
 
-  const similar = media.recommendations.results;
+  const similar = media?.recommendations?.results || [];
+  const cast = media?.credits?.cast || [];
+  const isTvShow = Array.isArray(media?.seasons) && media.seasons.length > 0;
 
-  const isTvShow = media.seasons != undefined;
+  const posterPath = media?.poster_path || backgroundPath;
+  const posterSrc = getTmdbImageUrl(posterPath, 'w500');
+  const title = media?.name || media?.title || 'Untitled';
+  const releaseYear = media?.release_date ? new Date(media.release_date).getFullYear() : null;
 
   return (
-    <main>
-      <div className="mt-14 bg-slate-600/10 flex flex-col sm:flex-row items-center min-h-[570px] w-full relative justify-center p-2 sm:px-16 gap-10">
-        <div className={`h-[500px] relative w-[380px]`}>
-          <Image
-            alt={media.name ? media.name : media.title}
-            fill
-            className={`object-cover h-[500px] -z-10 rounded-md`}
-            sizes=""
-            src={`https://image.tmdb.org/t/p/w500${media.poster_path}`}
-          />
-        </div>
+    <main className="min-h-screen pb-24 sm:pb-12">
+      {/* Hero Section with Ambient Backdrop */}
+      <section className="relative overflow-hidden w-full bg-gradient-to-b from-zinc-950/80 via-zinc-900/90 to-zinc-950 px-4 sm:px-8 md:px-16 py-8 md:py-14 border-b border-zinc-800/80">
+        {/* Background Image Ambient Glow */}
+        {backgroundUrl && (
+          <div className="absolute inset-0 -z-10 overflow-hidden opacity-20 filter blur-sm">
+            <Image
+              alt={title}
+              fill
+              sizes="100vw"
+              className="object-cover object-center scale-105"
+              src={backgroundUrl}
+              priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent" />
+          </div>
+        )}
 
-        <div className="flex flex-col gap-3 w-full md:w-[50%]">
-          {media.homepage != '' ? (
-            <Link href={media.homepage}>
-              <h1 className="text-3xl font-bold text-slate-300 hover:text-white">
-                {media.name ? media.name : media.title}
-              </h1>
-            </Link>
-          ) : (
-            <h1 className="text-3xl font-bold text-slate-30">
-              {media.name ? media.name : media.title}
-            </h1>
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center md:items-start gap-8 md:gap-12">
+          {/* Poster Image */}
+          {posterSrc && (
+            <div className="w-[240px] sm:w-[280px] md:w-[340px] flex-shrink-0 aspect-[2/3] relative rounded-2xl overflow-hidden shadow-2xl border border-zinc-700/60">
+              <Image
+                alt={title}
+                fill
+                sizes="(max-width: 768px) 280px, 340px"
+                className="object-cover"
+                src={posterSrc}
+                priority
+              />
+            </div>
           )}
 
-          <ul className="flex gap-1 text-sm text-blue-500">
-            {media.genres.map((genre, index) => {
-              if (media.genres.length - 1 === index)
-                return (
-                  <li key={genre.name}>
-                    {genre.name} {media.runtime && ' - ' + media.runtime + 'm'}
-                  </li>
-                );
+          {/* Details & Metadata */}
+          <div className="flex-1 flex flex-col gap-4 text-center md:text-left">
+            <div>
+              {media.homepage ? (
+                <Link href={media.homepage} target="_blank" rel="noopener noreferrer">
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white hover:text-red-500 transition-colors">
+                    {title} {releaseYear && <span className="text-zinc-500 font-normal text-2xl sm:text-3xl">({releaseYear})</span>}
+                  </h1>
+                </Link>
+              ) : (
+                <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white">
+                  {title} {releaseYear && <span className="text-zinc-500 font-normal text-2xl sm:text-3xl">({releaseYear})</span>}
+                </h1>
+              )}
 
-              return <li key={genre.name}>{genre.name},</li>;
-            })}
-          </ul>
+              {/* Genre and Runtime Pills */}
+              {Array.isArray(media.genres) && media.genres.length > 0 && (
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mt-3">
+                  {media.genres.map((genre) => (
+                    <span
+                      key={genre.name}
+                      className="px-3 py-1 bg-zinc-800/80 border border-zinc-700/60 rounded-full text-xs font-semibold text-blue-400"
+                    >
+                      {genre.name}
+                    </span>
+                  ))}
+                  {media.runtime && (
+                    <span className="px-3 py-1 bg-zinc-800/80 border border-zinc-700/60 rounded-full text-xs font-medium text-zinc-300">
+                      ⏱ {media.runtime}m
+                    </span>
+                  )}
+                  {media.status && (
+                    <span className="px-3 py-1 bg-red-950/60 border border-red-800/60 rounded-full text-xs font-bold text-red-400">
+                      {media.status}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
 
-          <h2 className="text-2xl text-slate-300">Overview</h2>
-          <p className="text-slate-300">{media.overview}</p>
+            {/* Score & Actions */}
+            <div className="flex items-center justify-center md:justify-start gap-4 py-2">
+              {typeof media.vote_average === 'number' && (
+                <div className="flex items-center gap-2 bg-black/60 border border-zinc-800 px-3.5 py-1.5 rounded-full">
+                  <span className="text-yellow-400 font-bold">★</span>
+                  <span className="text-white font-bold text-sm">
+                    {(media.vote_average * 10).toFixed(0)}% Score
+                  </span>
+                  {media.vote_count && (
+                    <span className="text-zinc-500 text-xs">({media.vote_count} votes)</span>
+                  )}
+                </div>
+              )}
 
-          <h3 className="text-sm text-slate-300">
-            User Score:{' '}
-            <span className="text-red-500">
-              {(media.vote_average * 10).toFixed(0)}%
-            </span>
-          </h3>
+              <FavoriteButton media={media} />
+            </div>
 
-          <h3 className="text-sm text-slate-300">
-            Votes: <span className="text-red-500">{media.vote_count}</span>
-          </h3>
+            {/* Overview */}
+            {media.overview && (
+              <div className="flex flex-col gap-2 mt-2">
+                <h2 className="text-lg font-bold text-zinc-200">Overview</h2>
+                <p className="text-zinc-300 text-sm sm:text-base leading-relaxed max-w-3xl">
+                  {media.overview}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
 
-          <h2 className="text-xl text-blue-400 font-bold">
-            {media.status && media.status}
+      {/* Cast Section */}
+      {cast.length > 0 && (
+        <section className="mt-10 max-w-7xl mx-auto">
+          <PersonCollection cast={cast} />
+        </section>
+      )}
+
+      {/* TV Seasons Section */}
+      {isTvShow && (
+        <section className="mt-12 px-4 sm:px-10 max-w-7xl mx-auto">
+          <h2 className="text-2xl font-bold text-white mb-6 border-b border-zinc-800 pb-2">
+            Seasons ({media.seasons?.length})
           </h2>
 
-          <FavoriteButton media={media} />
-        </div>
-
-        <div className={`h-[570px] absolute hidden sm:right-0 w-[100%] -z-10`}>
-          <Image
-            alt={media.name ? media.name : media.title}
-            fill
-            sizes="100vw"
-            className={`opacity-10 object-cover object-center`}
-            src={`https://image.tmdb.org/t/p/w1280${background}`}
-          />
-        </div>
-      </div>
-
-      <div className="mt-14 bg-slate-600/10 flex flex-col py-5">
-        <PersonCollection cast={media.credits.cast} />
-      </div>
-
-      {isTvShow && (
-        <div className="mt-14 bg-slate-600/10 flex flex-col xl:flex-row justify-evenly items-start h-auto w-full relative p-2 sm:px-16 gap-10">
-          <ul>
-            <h2 className="text-xl text-slate-300 font-bold text-center">
-              SEASONS
-            </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {media.seasons?.map((season) => (
               <article
-                className="flex flex-col sm:flex-row my-5 gap-5 justify-center items-center p-3 sm:p-0 w-[100%] md:w-full lg:w-[100%]"
                 key={season.id}
+                className="flex items-center gap-4 bg-zinc-900/70 border border-zinc-800/80 rounded-xl p-3 hover:border-zinc-700 transition"
               >
-                <div className={`xs:h-[280px] xs:w-full sm:h-[300px] relative sm:w-[300px]`}>
-                  <Image
-                    alt={season.name}
-                    fill
-                    sizes=""
-                    className={`object-cover h-[300px] -z-10 rounded-md`}
-                    src={`https://image.tmdb.org/t/p/w500${season.poster_path}`}
-                  />
-                </div>
+                {season.poster_path ? (
+                  <div className="w-20 h-28 relative rounded-lg overflow-hidden flex-shrink-0 bg-zinc-800">
+                    <Image
+                      alt={season.name}
+                      fill
+                      sizes="80px"
+                      className="object-cover"
+                      src={getTmdbImageUrl(season.poster_path, 'w500')}
+                    />
+                  </div>
+                ) : (
+                  <div className="w-20 h-28 rounded-lg bg-zinc-800 flex items-center justify-center text-xs text-zinc-500 flex-shrink-0">
+                    No Poster
+                  </div>
+                )}
 
-                <div className="w-full md:w-[60%] lg:w-[full]">
-                  <h2 className="text-lg text-red-600">{season.name}</h2>
-                  <h3 className="font-bold text-sm">
-                    {season.air_date} Episodes: {season.episode_count}
-                  </h3>
-                  <p>{season.overview}</p>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-base font-bold text-white truncate">{season.name}</h3>
+                  <p className="text-xs text-red-500 font-semibold mt-0.5">
+                    {season.episode_count} Episodes {season.air_date ? `• ${season.air_date}` : ''}
+                  </p>
+                  {season.overview && (
+                    <p className="text-xs text-zinc-400 mt-1 line-clamp-2 leading-relaxed">
+                      {season.overview}
+                    </p>
+                  )}
                 </div>
               </article>
             ))}
-          </ul>
+          </div>
 
-          {media.networks && (
-            <ul className="md:flex flex-row flex-wrap gap-4 md:justify-center w-[100%]">
-              <h2 className="text-xl text-center text-slate-300 font-bold w-full">
-                NETWORKS
-              </h2>
-              {media.networks.map((network) => (
-                <article
-                  className="flex my-5 gap-5 items-center justify-between sm:justify-end md:flex-col lg:flex-row"
-                  key={network.id}
-                >
-                  <div className={`h-[100px] relative w-[100px]`}>
-                    <Image
-                      alt={network.name}
-                      fill
-                      sizes=""
-                      className={`object-contain h-[100px] -z-10 rounded-md`}
-                      src={`https://image.tmdb.org/t/p/w500${network.logo_path}`}
-                    />
+          {/* Networks */}
+          {Array.isArray(media.networks) && media.networks.length > 0 && (
+            <div className="mt-8">
+              <h3 className="text-lg font-bold text-zinc-300 mb-3">Networks</h3>
+              <div className="flex flex-wrap gap-4 items-center">
+                {media.networks.map((network) => (
+                  <div
+                    key={network.id}
+                    className="flex items-center gap-2 bg-zinc-900/80 border border-zinc-800 px-3 py-1.5 rounded-lg"
+                  >
+                    {network.logo_path && (
+                      <div className="w-8 h-8 relative flex-shrink-0">
+                        <Image
+                          alt={network.name}
+                          fill
+                          sizes="32px"
+                          className="object-contain"
+                          src={getTmdbImageUrl(network.logo_path, 'w500')}
+                        />
+                      </div>
+                    )}
+                    <span className="text-xs font-semibold text-zinc-200">{network.name}</span>
                   </div>
-
-                  <div>
-                    <h2 className="text-lg text-red-600">{network.name}</h2>
-                    <p>{network.origin_country}</p>
-                  </div>
-                </article>
-              ))}
-            </ul>
+                ))}
+              </div>
+            </div>
           )}
-        </div>
+        </section>
       )}
 
-      <div className="mt-14 bg-slate-600/10 flex flex-col py-5">
-        <MovieCollection movies={similar} category="Recommended" />
-      </div>
+      {/* Recommendations */}
+      {similar.length > 0 && (
+        <section className="mt-12 max-w-7xl mx-auto">
+          <MovieCollection movies={similar} category="Recommended" />
+        </section>
+      )}
     </main>
   );
 }

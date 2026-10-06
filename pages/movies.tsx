@@ -1,24 +1,24 @@
-import type { NextPage } from 'next';
+import type { NextPage, GetServerSideProps } from 'next';
 import { MovieCollection } from '../components';
-import axios from 'axios';
-import { Media, Results } from '../types';
-import { pageMovieRequests } from './api/data/requests';
+import { Media } from '../types';
+import { getDiscover, getTrending, getTopRated } from '../lib/tmdb';
 
-export async function getServerSideProps() {
-  const popular: Results = await axios
-    .get(pageMovieRequests.discover)
-    .then((res) => res.data.results);
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  if (context.res) {
+    context.res.setHeader(
+      'Cache-Control',
+      'public, s-maxage=3600, stale-while-revalidate=86400'
+    );
+  }
 
-  const trending: Results = await axios
-    .get(pageMovieRequests.trending)
-    .then((res) => res.data.results);
-
-  const toprated: Results = await axios
-    .get(pageMovieRequests.toprated)
-    .then((res) => res.data.results);
+  const [popular, trending, toprated] = await Promise.all([
+    getDiscover('movie'),
+    getTrending('movie'),
+    getTopRated('movie'),
+  ]);
 
   return { props: { popular, trending, toprated } };
-}
+};
 
 interface Props {
   popular: Media[];
@@ -26,15 +26,15 @@ interface Props {
   toprated: Media[];
 }
 
-const Movies: NextPage<Props> = (props) => {
+const Movies: NextPage<Props> = ({ popular = [], trending = [], toprated = [] }) => {
   return (
-    <div>
-      <MovieCollection movies={props?.trending} category="Trending" />
+    <main className="pb-24 sm:pb-12 max-w-7xl mx-auto flex flex-col gap-6 pt-4">
+      <MovieCollection movies={trending} category="Trending" />
 
-      <MovieCollection movies={props?.popular} category="Popular" />
+      <MovieCollection movies={popular} category="Popular" />
 
-      <MovieCollection movies={props?.toprated} category="Toprated" />
-    </div>
+      <MovieCollection movies={toprated} category="Toprated" />
+    </main>
   );
 };
 

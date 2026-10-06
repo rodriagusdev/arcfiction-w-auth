@@ -10,21 +10,27 @@ export default async function handler(
     if (req.method === 'POST') {
       const { media } = req.body;
 
-      const existingMovie = await prismadb.media.findRaw({
-        filter: { media_id: media.id },
-      });
-
-      if (!existingMovie) {
-        throw new Error('Invalid ID');
+      if (!media?.id) {
+        return res.status(400).json({ error: 'Media object with id is required' });
       }
 
       const { currentUser } = await serverAuth(req, res);
 
+      const existingMedia = await prismadb.media.findUnique({
+        where: {
+          media_id: media.id.toString(),
+        },
+      });
+
+      if (existingMedia) {
+        return res.status(200).json(existingMedia);
+      }
+
       const sendMedia = await prismadb.media.create({
         data: {
           media_id: media.id.toString(),
-          title: media.name ? media.name : media.title,
-          poster: media.poster_path,
+          title: media.name ? media.name : media.title || 'Untitled',
+          poster: media.poster_path || '',
           type: media.name ? 'tvshow' : 'movie',
           userId: currentUser.id,
         },

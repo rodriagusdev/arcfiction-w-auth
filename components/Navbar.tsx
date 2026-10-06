@@ -14,39 +14,39 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="fixed top-0 sm:sticky w-full bg-customgray px-2 z-[500] bg-opacity-100 sm:bg-opacity-80 h-[50px] items-center">
-        {user.name != undefined ? (
-          <>
-            <nav className="mb-5 items-center hidden sm:flex backdrop-blur-sm">
-              <ul className="flex gap-2 sm:gap-10 font-bold text-xs items-center h-[50px]">
-                <li>
-                  <Link
-                    className={`${pathname == '/' && 'text-white'}`}
-                    href={'/'}
-                  >
-                    <h2 className="text-base">ARCFiction</h2>
-                  </Link>
-                </li>
+      <header className="sticky top-0 w-full bg-customgray/95 backdrop-blur-md border-b border-zinc-800/80 z-[500] px-4 sm:px-8 h-[60px] flex items-center justify-between">
+        <div className="flex items-center gap-6 md:gap-10">
+          <Link href="/" className="flex items-center gap-2 group">
+            <span className="text-xl font-black tracking-wider text-white">
+              ARC<span className="text-red-600 group-hover:text-red-500 transition-colors">Fiction</span>
+            </span>
+          </Link>
 
-                <NavbarLinks path={pathname} />
+          {user.name && (
+            <nav className="hidden sm:flex items-center">
+              <ul className="flex gap-2 lg:gap-4 font-medium text-sm items-center">
+                <NavbarLinks path={pathname} isMobile={false} />
               </ul>
             </nav>
+          )}
+        </div>
 
-            {user && <UserProfile user={user} />}
-          </>
+        {user.name ? (
+          <UserProfile user={user} />
         ) : (
-          <nav className="w-full h-[50px] bg-customgray bg-opacity-80 px-2 mb-3">
-            <h1 className="text-center text-2xl text-gray-400">
-              Welcome to ARCFiction
-            </h1>
-          </nav>
+          <Link
+            href="/auth"
+            className="bg-red-600 hover:bg-red-700 text-white font-semibold text-xs sm:text-sm px-4 py-1.5 rounded-full transition-all shadow-md hover:shadow-red-600/30"
+          >
+            Sign In
+          </Link>
         )}
       </header>
 
-      {user.name != undefined && (
-        <nav className="sm:hidden fixed p-0 bottom-0 bg-customgray w-[100vw] z-[500] bg-opacity-100 mb-0 h-[60px]">
-          <ul className="!h-[60px] flex font-bold text-[14px] sm:text-xs items-center text-red-600 justify-evenly">
-            <NavbarLinks path={pathname} />
+      {user.name && (
+        <nav className="sm:hidden fixed bottom-0 left-0 right-0 bg-customgray/95 backdrop-blur-md border-t border-zinc-800/80 z-[500] h-[60px] flex items-center px-2">
+          <ul className="w-full flex items-center justify-around">
+            <NavbarLinks path={pathname} isMobile={true} />
           </ul>
         </nav>
       )}

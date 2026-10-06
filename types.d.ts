@@ -43,7 +43,7 @@ export type MediaDetails = Media & {
   status?: string;
 };
 
-type Season = {
+export type Season = {
   air_date: string;
   episode_count: number;
   id: number;
@@ -52,17 +52,25 @@ type Season = {
   poster_path: string;
 };
 
-type Network = {
+export type Network = {
   id: number;
   logo_path: string;
   name: string;
   origin_country: string;
 };
 
-type Person = {
+export type Person = {
   cast_id: number;
   name: string;
   character: string;
   known_for_department: string;
   profile_path: string | null;
+};
+
+export type Video = {
+  id: string;
+  key: string;
+  name?: string;
+  site?: string;
+  type?: string;
 };

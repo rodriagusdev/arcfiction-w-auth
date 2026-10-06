@@ -1,33 +1,43 @@
-const KEY = process.env.NEXT_PUBLIC_API_KEY;
+import { NextApiRequest, NextApiResponse } from 'next';
+import { getDiscover, getTopRated, getTrending } from '../../../lib/tmdb';
 
-const discoverTv = `https://api.themoviedb.org/3/discover/tv?api_key=${KEY}&language=en-US&sort_by=popularity.desc&include_adult=false&include_video=false&page=1&with_watch_monetization_types=flatrate`;
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
-const trendingTv = `https://api.themoviedb.org/3/trending/tv/week?api_key=${KEY}`;
+  const { page = 'main' } = req.query;
 
-const topratedTv = `https://api.themoviedb.org/3/tv/top_rated?api_key=${KEY}`;
+  try {
+    if (page === 'tv') {
+      const [discover, trending, toprated] = await Promise.all([
+        getDiscover('tv'),
+        getTrending('tv'),
+        getTopRated('tv'),
+      ]);
+      return res.status(200).json({ discover, trending, toprated });
+    }
 
-const discoverMovie = `https://api.themoviedb.org/3/discover/movie?api_key=${KEY}&language=en-US&sort_by=popularity.desc&include_adult=false&include_video=false&page=1&with_watch_monetization_types=flatrate`;
+    if (page === 'movie') {
+      const [discover, trending, toprated] = await Promise.all([
+        getDiscover('movie'),
+        getTrending('movie'),
+        getTopRated('movie'),
+      ]);
+      return res.status(200).json({ discover, trending, toprated });
+    }
 
-const trendingMovie = `https://api.themoviedb.org/3/trending/movie/week?api_key=${KEY}`;
-
-const topratedMovie = `https://api.themoviedb.org/3/movie/top_rated?api_key=${KEY}`;
-
-const trendingAll = `https://api.themoviedb.org/3/trending/all/week?api_key=${KEY}`;
-
-export const pageMainRequests = {
-  discover: discoverMovie,
-  trending: trendingAll,
-  toprated: topratedMovie,
-};
-
-export const pageTvRequests = {
-  discover: discoverTv,
-  trending: trendingTv,
-  toprated: topratedTv,
-};
-
-export const pageMovieRequests = {
-  discover: discoverMovie,
-  trending: trendingMovie,
-  toprated: topratedMovie,
-};
+    const [discover, trending, toprated] = await Promise.all([
+      getDiscover('movie'),
+      getTrending('all'),
+      getTopRated('movie'),
+    ]);
+    return res.status(200).json({ discover, trending, toprated });
+  } catch (error) {
+    console.error('Error in /api/data/requests:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}

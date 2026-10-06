@@ -35,7 +35,7 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({ media }) => {
     }
 
     mutateFavorites();
-  }, [media.id, currentUser, data, mutate, mutateFavorites]);
+  }, [isFavorited, media, mutateFavorites]);
 
   const Icon = isFavorited ? <SvgUnlist /> : <SvgList />;
 

@@ -4,6 +4,11 @@ import { Roboto } from 'next/font/google';
 import { Navbar } from '../components';
 import Head from 'next/head';
 import { Toaster } from 'react-hot-toast';
+import { useEffect } from 'react';
+import Router from 'next/router';
+import NProgress from 'nprogress';
+
+NProgress.configure({ showSpinner: false, trickleSpeed: 100 });
 
 const roboto = Roboto({
   subsets: ['latin'],
@@ -11,6 +16,21 @@ const roboto = Roboto({
 });
 
 function MyApp({ Component, pageProps: { session, ...pageProps } }: AppProps) {
+  useEffect(() => {
+    const handleStart = () => NProgress.start();
+    const handleStop = () => NProgress.done();
+
+    Router.events.on('routeChangeStart', handleStart);
+    Router.events.on('routeChangeComplete', handleStop);
+    Router.events.on('routeChangeError', handleStop);
+
+    return () => {
+      Router.events.off('routeChangeStart', handleStart);
+      Router.events.off('routeChangeComplete', handleStop);
+      Router.events.off('routeChangeError', handleStop);
+    };
+  }, []);
+
   return (
     <main className={roboto.className}>
       <Head>
@@ -26,7 +46,9 @@ function MyApp({ Component, pageProps: { session, ...pageProps } }: AppProps) {
         toastOptions={{
           duration: 1500,
           style: {
-            color: 'green',
+            background: '#18181b',
+            color: '#f4f4f5',
+            border: '1px solid #3f3f46',
           },
         }}
       />

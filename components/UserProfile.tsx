@@ -5,28 +5,35 @@ import Image from 'next/image';
 
 export default function UserProfile({ user }: { user: LoggedUser }) {
   const profileImage =
-    user?.image == '' || user?.image == undefined
+    user?.image === '' || user?.image === undefined
       ? defaultAvatar.src
       : user.image;
 
   return (
-    <div className="flex rounded-md top-0 items-center bg-opacity-80 gap-2  sm:justify-end sm:absolute right-5 h-[50px]">
+    <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
+        <div className="relative w-8 h-8 rounded-full overflow-hidden border border-zinc-700">
+          <Image
+            className="object-cover"
+            src={profileImage}
+            fill
+            sizes="32px"
+            alt={user.name || 'Avatar'}
+          />
+        </div>
+        {user.name && (
+          <span className="font-semibold text-sm text-zinc-200 hidden md:inline truncate max-w-[120px]">
+            {user.name}
+          </span>
+        )}
+      </div>
+
       <button
-        className="bg-red-600 hover:bg-red-600/70 transition-colors text-white w-36 h-10 rounded-md"
+        className="bg-red-600/90 hover:bg-red-600 transition-all text-white text-xs sm:text-sm font-semibold px-3 sm:px-4 py-1.5 rounded-full shadow hover:shadow-red-600/30"
         onClick={() => signOut()}
       >
         Sign Out
       </button>
-
-      <Image
-        className="border-2 border-slate-700"
-        src={profileImage}
-        height={'40'}
-        width={'40'}
-        alt="Avatar"
-      />
-
-      <h2 className="font-bold text-sm">{user.name}</h2>
     </div>
   );
 }

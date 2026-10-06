@@ -1,34 +1,42 @@
-import { NextPage, NextPageContext } from 'next';
+import { NextPage, GetServerSideProps } from 'next';
 import { MediaDetails } from '../../types';
 import { MediaDetailed } from '../../components';
-import axios from 'axios';
+import { getTvShowDetails } from '../../lib/tmdb';
 
-interface Context extends NextPageContext {
-  resolvedUrl: string;
-}
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const mediaId = context.params?.id || context.query.id;
 
-export async function getServerSideProps(context: Context) {
-  const mediaId = context.query.id;
+  if (!mediaId || Array.isArray(mediaId)) {
+    return { notFound: true };
+  }
 
-  const path = context.resolvedUrl;
+  if (context.res) {
+    context.res.setHeader(
+      'Cache-Control',
+      'public, s-maxage=3600, stale-while-revalidate=86400'
+    );
+  }
 
-  const url = `https://api.themoviedb.org/3/${
-    path.includes('movie') ? 'movie' : 'tv'
-  }/${mediaId}?api_key=${
-    process.env.NEXT_PUBLIC_API_KEY
-  }&language=en-US&include_image_language&append_to_response=recommendations,images,credits&include_image_language=en,null`;
+  const media = await getTvShowDetails(mediaId);
 
-  const media: MediaDetails = await axios.get(url).then((res) => res.data);
+  if (!media) {
+    return { notFound: true };
+  }
 
-  return { props: { media } };
-}
+  return {
+    props: {
+      media,
+    },
+  };
+};
 
 interface Props {
   media: MediaDetails;
 }
 
-const Media: NextPage<Props> = (props) => {
-  return <MediaDetailed media={props.media} />;
+const TVShowPage: NextPage<Props> = ({ media }) => {
+  if (!media) return null;
+  return <MediaDetailed media={media} />;
 };
 
-export default Media;
+export default TVShowPage;
