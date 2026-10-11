@@ -1,15 +1,17 @@
 import { useCallback, useState } from 'react';
-import { getSession, signIn } from 'next-auth/react';
+import { signIn } from 'next-auth/react';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../lib/authOptions';
 import { AuthInput } from '../components';
 import { SvgGithub, SvgGoogle } from '../components/Svgs';
 import { useRouter } from 'next/router';
-import { NextPageContext } from 'next';
+import { GetServerSidePropsContext } from 'next';
 import axios from 'axios';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 
-export async function getServerSideProps(context: NextPageContext) {
-  const session = await getSession(context);
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const session = await getServerSession(context.req, context.res, authOptions);
 
   if (session) {
     return {

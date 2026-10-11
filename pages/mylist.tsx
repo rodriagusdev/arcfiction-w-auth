@@ -1,13 +1,14 @@
-import { NextPage, NextPageContext } from 'next';
-import { getSession } from 'next-auth/react';
+import { NextPage, GetServerSidePropsContext } from 'next';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../lib/authOptions';
 import { useFavorites } from '../hooks';
 import { FavoriteMedia } from '../types';
 import FavoritedMedia from '../components/FavoritedMedia';
 import SkeletonCard from '../components/SkeletonCard';
 import Link from 'next/link';
 
-export async function getServerSideProps(context: NextPageContext) {
-  const session = await getSession(context);
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const session = await getServerSession(context.req, context.res, authOptions);
 
   if (!session) {
     return {

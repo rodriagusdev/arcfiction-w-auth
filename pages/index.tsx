@@ -1,11 +1,12 @@
-import type { NextPage, NextPageContext } from 'next';
-import { getSession } from 'next-auth/react';
+import type { NextPage, GetServerSidePropsContext } from 'next';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../lib/authOptions';
 import { MovieCollection } from '../components';
 import { Media } from '../types';
 import { getDiscover, getTrending, getTopRated } from '../lib/tmdb';
 
-export async function getServerSideProps(context: NextPageContext) {
-  const session = await getSession(context);
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const session = await getServerSession(context.req, context.res, authOptions);
 
   if (!session) return { redirect: { destination: '/auth', permanent: false } };
 
